@@ -64,7 +64,7 @@ class RomsmodeSpider(CrawlSpider):
             "link": response.url,
             "category": self.category,
             "title": "".join(response.xpath(xpath['title']).extract()).strip(),
-            "region": "".join(response.xpath(xpath['region']).extract()).strip(),
+            "region": norm_region("".join(response.xpath(xpath['region']).extract()).strip()),
             "logo": response.xpath(xpath['image']).extract(),
         }
         if self.rm_none:
@@ -81,5 +81,5 @@ class RomsmodeSpider(CrawlSpider):
             "file": response.xpath(xpath['download_link']).extract()
         })
         self.client.UpsertItem(self.container_path, record)
-        self.client.UpsertItem(self.regions_path, {"id": norm_region(record.get("region")), "title": record.get("region")})
+        self.client.UpsertItem(self.regions_path, {"id": record.get("region"), "title": record.get("region")})
         del self.queue_dict[response.url]
