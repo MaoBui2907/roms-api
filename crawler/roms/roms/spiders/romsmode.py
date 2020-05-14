@@ -81,5 +81,5 @@ class RomsmodeSpider(CrawlSpider):
             "file": response.xpath(xpath['download_link']).extract()
         })
         self.client.UpsertItem(self.container_path, record)
-        self.client.UpsertItem(self.regions_path, {"id": norm_region, "title": record.get("region")})
+        self.client.UpsertItem(self.regions_path, {"id": norm_region(record.get("region")), "title": record.get("region")})
         del self.queue_dict[response.url]
