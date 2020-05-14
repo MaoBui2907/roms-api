@@ -19,9 +19,16 @@ with open('./db.toml', 'r') as f:
 with open('./config.toml', 'r') as f:
     config = toml.load(f)
 
+
 def id_from_url(url: str) -> str:
     out = url.replace(':', '')
     out = out.replace('/', '-')
+    return out
+
+
+def norm_region(region: str) -> str:
+    out = region.strip().lower()
+    out = out.replace(" ", "")
     return out
 
 class RomsmodeSpider(CrawlSpider):
@@ -35,15 +42,18 @@ class RomsmodeSpider(CrawlSpider):
         self.rm_none = run_config["rm_none"]
 
         self.client = cosmos_client.CosmosClient(database_config.get("ACCOUNT_URI"), {
-                                    'masterKey': database_config.get("ACCOUNT_KEY")})
+            'masterKey': database_config.get("ACCOUNT_KEY")})
         database_id = "Roms"
         roms_container_id = "roms"
+        regions_container_id = "regions"
+        categories_container_id = "categories"
         self.container_path = "dbs/" + database_id + "/colls/" + roms_container_id
+        self.regions_path = "dbs/" + database_id + "/colls/" + regions_container_id
 
         self.queue_dict = defaultdict(dict)
 
         RomsmodeSpider.rules = [Rule(LinkExtractor(allow=run_config["allowed_regex"][int(cate_id)],
-                                              deny_extensions=run_config["denied_extensions"]), callback="parse_item", follow=True)]
+                                                   deny_extensions=run_config["denied_extensions"]), callback="parse_item", follow=True)]
         super(RomsmodeSpider, self)._compile_rules()
 
     def parse_item(self, response):
@@ -63,7 +73,7 @@ class RomsmodeSpider(CrawlSpider):
         download_page = o.scheme + "://" + o.netloc + "/download" + o.path
         self.queue_dict[download_page] = record
         yield Request(download_page, callback=self.parse_file)
-    
+
     def parse_file(self, response):
         xpath = config.get('Xpath')
         record = self.queue_dict[response.url]
@@ -71,7 +81,5 @@ class RomsmodeSpider(CrawlSpider):
             "file": response.xpath(xpath['download_link']).extract()
         })
         self.client.UpsertItem(self.container_path, record)
+        self.client.UpsertItem(self.regions_path, {"id": norm_region, "title": record.get("region")})
         del self.queue_dict[response.url]
-
-        
-        
