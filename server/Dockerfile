@@ -1,4 +1,4 @@
-FROM python:3.6.10
+FROM tiangolo/uwsgi-nginx-flask:python3.6
 WORKDIR /usr/server/app
 COPY . .
 RUN ls
@@ -7,4 +7,5 @@ RUN pipenv --python 3.6
 RUN pipenv install --deploy
 RUN . $(pipenv --venv)/bin/activate
 EXPOSE 2020
-CMD [ "python", 'app.py' ]
+ENV FLASK_APP=app.py
+CMD flask run -h 0.0.0.0 -p = 2020

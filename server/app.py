@@ -82,6 +82,3 @@ def not_found(error):
 def server_error(error):
     return make_response(jsonify(error="Internal server error"), 500)
 
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=2020, debug=True)
