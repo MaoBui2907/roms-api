@@ -1,6 +1,4 @@
 FROM ubuntu:18.04
-COPY server /app
-WORKDIR /app
 RUN ls
 RUN python -m pip install pipenv
 RUN pipenv --python 3.6
