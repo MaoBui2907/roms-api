@@ -8,4 +8,4 @@ RUN pipenv install --deploy
 RUN . $(pipenv --venv)/bin/activate
 EXPOSE 2020
 ENV FLASK_APP=app.py
-CMD flask run -h 0.0.0.0 -p = 2020
+CMD flask run -h 0.0.0.0 -p = 80
