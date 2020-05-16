@@ -28,8 +28,9 @@ jobs:
         . $(pipenv --venv)/bin/activate
 
     - name: 'Deploy to Azure Web App'
-      uses: azure/webapps-deploy@v1
+      uses: azure/webapps-deploy@v2
       with:
         app-name: 'roms'
         slot-name: 'production'
         publish-profile: ${{ secrets.AzureAppService_PublishProfile_73c208eda82f470b8640b4409f7542ea }}
+        package: '.'
