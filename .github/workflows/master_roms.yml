@@ -20,11 +20,13 @@ jobs:
       with:
         python-version: '3.6'
 
-    - name: Install Python dependencies
+    - name: Pipenv and install Python dependencies
       run: |
-        python3 -m venv env
-        source env/bin/activate
-        pip install -r requirements.txt
+        cd server
+        python3 -m pip install pipenv
+        pipenv install --deploy
+        . $(pipenv --venv)/bin/activate
+
     - name: Zip the application files
       run: zip -r myapp.zip .
 

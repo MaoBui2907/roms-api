@@ -16,29 +16,47 @@ class RomsBrowser:
         self.window = tk.Tk()
         self.window.title("Emulator roms browser")
         self.window.geometry('645x580')
+        self.window.resizable(False, False)
 
         self.control_frame = tk.LabelFrame(self.window, text="Search")
         self.control_frame.grid(row=0, sticky='WE', padx=10, pady=10, ipadx=10, ipady=10)
 
-        self.categories_url = "http://localhost:2020/categories/0/10000"
-        res = requests.get(self.categories_url)
-        self.categories = json.loads(res.text).get("data")
-        self.categories_title = [c.get("title") for c in self.categories]
-        self.categories_id = [c.get("id") for c in self.categories]
+
+        self.categories = []
+        self.categories_title = []
+        self.categories_id = []
+
+        self.api_host = "http://localhost:2020"
+
+        try:
+            self.categories_url = self.api_host + "/categories/0/10000"
+            res = requests.get(self.categories_url)
+            self.categories = json.loads(res.text).get("data")
+            self.categories_title = [c.get("title") for c in self.categories]
+            self.categories_id = [c.get("id") for c in self.categories]
+        except:
+            print("Network error")
 
         self.categories_var = tk.StringVar(self.control_frame)
-        self.categories_var.set(self.categories_title[0])
+        self.categories_var.set(self.categories_title[0] if self.categories_title else '')
         self.categories_dropdown = ttk.Combobox(self.control_frame, textvariable=self.categories_var, values=self.categories_title)
         self.categories_dropdown.grid(column=0, row=0, sticky="WE", padx=10, pady=10)
-
-        self.regions_url = "http://localhost:2020/regions"
-        res = requests.get(self.regions_url)
-        self.regions = json.loads(res.text).get("data")
-        self.regions_title = [r.get("title") for r in self.regions]
-        self.regions_id = [r.get("id") for r in self.regions]
+        
+        
+        self.regions = []
+        self.regions_title = []
+        self.regions_id = []
+        try:
+            self.regions_url = self.api_host + "/regions"
+            res = requests.get(self.regions_url)
+            self.regions = json.loads(res.text).get("data")
+            self.regions_title = [r.get("title") for r in self.regions]
+            self.regions_id = [r.get("id") for r in self.regions]
+        except requests.exceptions.ConnectionError:
+            print("Network error")
 
         self.regions_var = tk.StringVar(self.control_frame)
-        self.regions_var.set(self.regions_title[0])
+        self.regions_var.set(self.regions_title[0] if self.regions_title else '')
         self.regions_dropdown = ttk.Combobox(self.control_frame, textvariable=self.regions_var, values=self.regions_title)
         self.regions_dropdown.grid(column=1, row=0, sticky="WE", padx=10, pady=10)
 
@@ -53,7 +71,7 @@ class RomsBrowser:
         self.result_frame = tk.LabelFrame(self.window, text="Result")
         self.result_frame.grid(row=1, sticky='WE', padx=10, pady=10, ipadx=10, ipady=10)
 
-        self.search_url = "http://localhost:2020/search"
+        self.search_url = self.api_host + "/search"
 
         self.result_list = tk.ttk.Treeview(self.result_frame, selectmode="browse", height=7)
         self.result_list['columns'] = ('one', 'two')

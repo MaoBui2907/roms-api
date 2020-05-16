@@ -6,13 +6,14 @@ verify_ssl = true
 [dev-packages]
 pylint = "*"
 autopep8 = "*"
-
-[packages]
 flask = "*"
 azure-cosmos = "*"
 scrapy = "*"
 pillow = "*"
-wget = "*"
+requests = "~=2.21.0"
+pyinstaller = "*"
+setuptools = "*"
+toml = "*"
 
 [requires]
 python_version = "3.8"
