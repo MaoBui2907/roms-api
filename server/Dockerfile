@@ -1,6 +1,6 @@
-FROM ubuntu:18.04
+FROM python:3.6.10
+WORKDIR /usr/server
 RUN ls
-RUN apt install python3.6 python3-pip
 RUN python3.6 -m pip install pipenv
 RUN pipenv --python 3.6
 RUN pipenv install --deploy
