@@ -8,4 +8,4 @@ RUN ls -la
 RUN pipenv install --deploy --ignore-pipfile
 EXPOSE 2020
 ENV FLASK_APP=app.py
-CMD ["pipenv", "run", "flask run -h 0.0.0.0 -p 2020"]
+RUN pipenv run flask run -h 0.0.0.0 -p 2020
