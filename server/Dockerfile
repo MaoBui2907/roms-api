@@ -1,4 +1,4 @@
-FROM tiangolo/uwsgi-nginx-flask:python3.6
+FROM python:3.6
 WORKDIR /usr/server/app
 COPY . .
 RUN ls -la
@@ -6,6 +6,6 @@ ENV PIPENV_VENV_IN_PROJECT=1
 RUN pip install pipenv
 RUN ls -la
 RUN pipenv install --deploy --ignore-pipfile
-EXPOSE 8080
+EXPOSE 2020
 ENV FLASK_APP=app.py
-CMD [ "uwsgi", "uwsgi.ini" ]
+CMD [ "pipenv", "run", "flask", "run", "-h", "0.0.0.0", "-p", "2020" ]
