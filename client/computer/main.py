@@ -26,7 +26,7 @@ class RomsBrowser:
         self.categories_title = []
         self.categories_id = []
 
-        self.api_host = "http://localhost:2020"
+        self.api_host = "https://roms.azurewebsites.net"
 
         try:
             self.categories_url = self.api_host + "/categories/0/10000"
