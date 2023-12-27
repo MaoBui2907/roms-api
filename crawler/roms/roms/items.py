@@ -11,4 +11,11 @@ import scrapy
 class RomsItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
+    id = scrapy.Field()
+    link = scrapy.Field()
+    title = scrapy.Field()
+    logo = scrapy.Field()
+    region = scrapy.Field()
+    category = scrapy.Field()
+    download_url = scrapy.Field()
     pass

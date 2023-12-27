@@ -1,0 +1,1 @@
+i50 */3 * * * cd /app && pipenv run scrapy crawl romsgames

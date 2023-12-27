@@ -31,6 +31,7 @@ CONCURRENT_REQUESTS = 8
 # The download delay setting will honor only one of:
 #CONCURRENT_REQUESTS_PER_DOMAIN = 16
 #CONCURRENT_REQUESTS_PER_IP = 16
+USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64; rv:48.0) Gecko/20100101 Firefox/48.0'
 
 # Disable cookies (enabled by default)
 #COOKIES_ENABLED = False
@@ -64,9 +65,10 @@ CONCURRENT_REQUESTS = 8
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'roms.pipelines.RomsPipeline': 300,
-#}
+ITEM_PIPELINES = {
+   'roms.pipelines.RomsPipeline': 300,
+   'roms.pipelines.StoreToDatabase': 400,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html

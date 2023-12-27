@@ -5,6 +5,7 @@ from scrapy.spiders import Rule, CrawlSpider
 from scrapy.linkextractors import LinkExtractor
 from scrapy.http import Request
 import toml
+import os
 from urllib.parse import urlparse
 from collections import defaultdict
 
@@ -12,13 +13,8 @@ import azure.cosmos.documents as documents
 import azure.cosmos.cosmos_client as cosmos_client
 import azure.cosmos.errors as errors
 
-
-with open('./db.toml', 'r') as f:
-    database_config = toml.load(f).get('Database')
-
-with open('./config.toml', 'r') as f:
+with open('./resources/config.toml', 'r') as f:
     config = toml.load(f)
-
 
 def id_from_url(url: str) -> str:
     out = url.replace(':', '')
@@ -41,14 +37,15 @@ class RomsmodeSpider(CrawlSpider):
         self.category = run_config["categories"][int(cate_id)]
         self.rm_none = run_config["rm_none"]
 
-        self.client = cosmos_client.CosmosClient(database_config.get("ACCOUNT_URI"), {
-            'masterKey': database_config.get("ACCOUNT_KEY")})
-        database_id = "Roms"
-        roms_container_id = "roms"
-        regions_container_id = "regions"
-        categories_container_id = "categories"
-        self.container_path = "dbs/" + database_id + "/colls/" + roms_container_id
-        self.regions_path = "dbs/" + database_id + "/colls/" + regions_container_id
+        # self.client = cosmos_client.CosmosClient(COSMOSDB_ACCOUNT_URI, {
+        #     'masterKey': COSMOSDB_ACCOUNT_KEY })
+        # database_id = COSMOSDB_DB_ID
+        # self.client.create_database_if_not_exists(database_id)
+        # roms_container_id = "roms"
+        # regions_container_id = "regions"
+        # categories_container_id = "categories"
+        # self.container_path = "dbs/" + database_id + "/colls/" + roms_container_id
+        # self.regions_path = "dbs/" + database_id + "/colls/" + regions_container_id
 
         self.queue_dict = defaultdict(dict)
 
@@ -75,11 +72,11 @@ class RomsmodeSpider(CrawlSpider):
         yield Request(download_page, callback=self.parse_file)
 
     def parse_file(self, response):
-        xpath = config.get('Xpath')
-        record = self.queue_dict[response.url]
-        record.update({
-            "file": response.xpath(xpath['download_link']).extract()
-        })
-        self.client.UpsertItem(self.container_path, record)
-        self.client.UpsertItem(self.regions_path, {"id": record.get("region"), "title": record.get("region")})
+        # xpath = config.get('Xpath')
+        # record = self.queue_dict[response.url]
+        # record.update({
+        #     "file": response.xpath(xpath['download_link']).extract()
+        # })
+        # self.client.UpsertItem(self.container_path, record)
+        # self.client.UpsertItem(self.regions_path, {"id": record.get("region"), "title": record.get("region")})
         del self.queue_dict[response.url]

@@ -1,0 +1,19 @@
+[Run]
+start_urls = ["https://www.romsgames.net/roms/"]
+allowed_domains = ['romsgames.net']
+denied_extensions = ['jpg', 'png', 'pdf', 'jpeg']
+rm_none = true
+
+[Xpath]
+
+category_link = "//ul[contains(@class, \"rg-gamelist\")]/li/a/@href"
+
+rom_link = "//ul[contains(@class, \"rg-gamelist\")]/li/a/@href"
+next_page = "//ul[contains(@class, \"pagination prenex\")]/li/a[contains(text(), \"Next\")]"
+
+title = "//h1[contains(@class, \"rom-title\")]/text()"
+logo = "//div[contains(@class, \"rg-gamebox-thumb\")]//img/@src"
+region = "//ul[contains(@class, \"gameinfo\")]/li[1]/text()[last()]"
+download_link = "//div[contains(@class, \"whitecover\")]//form[contains(@name, \"redirected\")]/@action"
+download_attachment = "//form/input[contains(@name, \"attach\")]/@value"
+category = "//div[contains(@class, \"breadcrumbs\")]//ol/li[position() = (last() - 1)]//span/text()"

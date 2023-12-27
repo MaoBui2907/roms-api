@@ -1,4 +1,5 @@
 
+import time
 import tkinter as tk
 
 from tkinter import filedialog
@@ -26,14 +27,14 @@ class RomsBrowser:
         self.categories_title = []
         self.categories_id = []
 
-        self.api_host = "https://roms.azurewebsites.net"
+        self.api_host = os.environ.get("API_URL", "http://localhost:2020")
 
         try:
-            self.categories_url = self.api_host + "/categories/0/10000"
+            self.categories_url = self.api_host + "/categories"
             res = requests.get(self.categories_url)
             self.categories = json.loads(res.text).get("data")
-            self.categories_title = [c.get("title") for c in self.categories]
-            self.categories_id = [c.get("id") for c in self.categories]
+            self.categories_title = [ 'All' ] + [c.get("title") for c in self.categories]
+            self.categories_id = [ None ] + [c.get("id") for c in self.categories]
         except:
             print("Network error")
 
@@ -50,8 +51,8 @@ class RomsBrowser:
             self.regions_url = self.api_host + "/regions"
             res = requests.get(self.regions_url)
             self.regions = json.loads(res.text).get("data")
-            self.regions_title = [r.get("title") for r in self.regions]
-            self.regions_id = [r.get("id") for r in self.regions]
+            self.regions_title = [ 'All' ] + [r.get("title") for r in self.regions]
+            self.regions_id = [ None ] + [r.get("id") for r in self.regions]
         except requests.exceptions.ConnectionError:
             print("Network error")
 
@@ -71,7 +72,7 @@ class RomsBrowser:
         self.result_frame = tk.LabelFrame(self.window, text="Result")
         self.result_frame.grid(row=1, sticky='WE', padx=10, pady=10, ipadx=10, ipady=10)
 
-        self.search_url = self.api_host + "/search"
+        self.search_url = self.api_host + "/roms"
 
         self.result_list = tk.ttk.Treeview(self.result_frame, selectmode="browse", height=7)
         self.result_list['columns'] = ('one', 'two')
@@ -154,11 +155,14 @@ class RomsBrowser:
 
     def start_download_roms(self):
         for i in range(len(self.download_queue)):
-            url = self.download_queue[i].get('file')[0]
-            res = requests.get(url)
-            file_name = urllib.parse.urlparse(url)[2].rpartition('/')[-1]
-            with open(os.path.join(self.tempdir, file_name), 'wb') as fb:
-                fb.write(res.content)
+            url = self.download_queue[i].get('download_link')
+            # wait 5s
+            time.sleep(15)
+
+            # res = requests.get(url)
+            # file_name = urllib.parse.urlparse(url)[2].rpartition('/')[-1]
+            # with open(os.path.join(self.tempdir, file_name), 'wb') as fb:
+            #     fb.write(res.content)
             self.download_progress_bar['value'] = math.floor((i +1)*100/len(self.download_queue))
         pass
 
@@ -204,7 +208,7 @@ class RomsBrowser:
         for item in self.result_list.selection():
             item_text = self.result_list.item(item,"text")
             self.selected_rom = self.search_roms[int(item_text) - 1]
-            res = requests.get(self.selected_rom.get('logo')[0])
+            res = requests.get(self.selected_rom.get('logo'))
             logo = Image.open(BytesIO(res.content)).resize((120, 120))
             img_tk = ImageTk.PhotoImage(logo)
             self.show_logo(img_tk)
@@ -218,15 +222,15 @@ class RomsBrowser:
         category_id = self.categories_id[self.categories_title.index(cate_tit)]
         reg_tit = self.regions_var.get()
         region_id = self.regions_id[self.regions_title.index(reg_tit)]
-        keyword = self.search_box.get()
-        dataform = {
+        keyword = self.search_box.get().strip()
+        params = {
             "category": category_id,
             "region": region_id,
-            "keyword": keyword,
+            "keyword": keyword if keyword != '' else None,
             "offset": (self.page - 1) * self.item_per_page,
             "limit": self.item_per_page
         }
-        res = requests.post(self.search_url, data=dataform)
+        res = requests.get(self.search_url, params)
         data = json.loads(res.text).get("data")
         self.search_roms = data
         self.clear_result_list()

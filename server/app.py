@@ -1,76 +1,80 @@
-import toml
-from flask import Flask
-from flask import jsonify
-from flask import request
-from flask import make_response
-
-import azure.cosmos.documents as documents
-import azure.cosmos.cosmos_client as cosmos_client
-import azure.cosmos.errors as errors
+import os
+from flask import Flask, request, jsonify, make_response
+from azure.cosmos import cosmos_client, PartitionKey 
 
 
-with open('./db.toml', 'r') as f:
-    database_config = toml.load(f).get('Database')
+COSMOSDB_ACCOUNT_URI = os.environ.get("COSMOSDB_ACCOUNT_URI")
+COSMOSDB_ACCOUNT_KEY = os.environ.get("COSMOSDB_ACCOUNT_KEY")
+COSMOSDB_DATABASE_ID = os.environ.get("COSMOSDB_DATABASE_ID")
 
-
-client = cosmos_client.CosmosClient(database_config.get("ACCOUNT_URI"), {
-                                    'masterKey': database_config.get("ACCOUNT_KEY")})
+client = cosmos_client.CosmosClient(COSMOSDB_ACCOUNT_URI, {
+                                    'masterKey': COSMOSDB_ACCOUNT_KEY })
 
 app = Flask(__name__)
 
 
-database_id = "Roms"
 categories_container_id = "categories"
 roms_container_id = "roms"
 regions_container_id = "regions"
 
-categories_url = "dbs/" + database_id + "/colls/" + categories_container_id
-roms_url = "dbs/" + database_id + "/colls/" + roms_container_id
-regions_url = "dbs/" + database_id + "/colls/" + regions_container_id
+database = client.create_database_if_not_exists(COSMOSDB_DATABASE_ID)
+categories_container = database.create_container_if_not_exists(
+    id=categories_container_id,
+    partition_key=PartitionKey(path="/category"),
+    offer_throughput=400
+)
 
-@app.route('/categories/<int:offset>/<int:limit>')
-def list_categories(offset, limit):
-    query = "select c.id, c.title from c offset {} limit {}".format(
-        offset, limit)
-    options = {'enableCrossPartitionQuery': True}
-    categories = client.QueryItems(categories_url, query, options)
+roms_container = database.create_container_if_not_exists(
+    id=roms_container_id,
+    partition_key=PartitionKey(path="/roms"),
+    offer_throughput=400
+)
+
+regions_container = database.create_container_if_not_exists(
+    id=regions_container_id,
+    partition_key=PartitionKey(path="/regions"),
+    offer_throughput=200
+)
+
+@app.get('/categories')
+def list_categories(offset = 0, limit = 100):
+    query = "select * from c offset {} limit {}".format(offset, limit)
+    categories = categories_container.query_items(query, enable_cross_partition_query=True)
     out = list(categories)
     return jsonify(data=out)
 
 
-@app.route('/roms/<string:category>/<string:region>/<int:offset>/<int:limit>')
-def list_roms(category: str, region: str, offset: int, limit: int):
-    query = "select c.link, c.title, c.file, c.logo, c.region from c where c.category='{}' and c.region='{}' offset {} limit {}".format(
-        category, region, offset, limit)
-    options = {'enableCrossPartitionQuery': True}
-    roms = client.QueryItems(roms_url, query, options)
-    out = list(roms)
-    return jsonify(data=out)
-
-
 @app.route('/regions')
-def list_regions():
-    query = "select c.id, c.title from c"
-    options = {'enableCrossPartitionQuery': True}
-    regions = client.QueryItems(regions_url, query, options)
+def list_regions(offset = 0, limit = 100):
+    query = "select * from c offset {} limit {}".format(offset, limit)
+    regions = regions_container.query_items(query, enable_cross_partition_query=True)
     out = list(regions)
     return jsonify(data=out)
 
 
-@app.route('/search', methods=['POST'])
+@app.get('/roms')
 def search_roms():
-    if request.method == "POST":
-        category = request.form.get("category")
-        region = request.form.get("region")
-        keyword = request.form.get("keyword")
-        offset = request.form.get("offset")
-        limit = request.form.get("limit")
-        query = "select c.link, c.title, c.file, c.logo, c.region, c.category from c where c.category='{}' and c.region='{}' and contains(lower(c.title), lower('{}')) offset {} limit {}".format(
-            category, region, keyword, offset, limit)
-        options = {'enableCrossPartitionQuery': True}
-        roms = client.QueryItems(roms_url, query, options)
-        out = list(roms)
-        return jsonify(data=out[- int(limit):])
+    category = request.args.get("category")
+    region = request.args.get("region")
+    keyword = request.args.get("keyword")
+    offset = request.args.get("offset", 0)
+    limit = request.args.get("limit", 100)
+    
+    query = "select * from c"
+    query_params = []
+    if category is not None:
+        query_params.append("c.category = '{}'".format(category))
+    if region is not None:
+        query_params.append("c.region = '{}'".format(region))
+    if keyword is not None:
+        query_params.append("contains(c.title, '{}')".format(keyword))
+    if len(query_params) > 0:
+        query += " where " + " and ".join(query_params)
+    query += " offset {} limit {}".format(offset, limit)
+    
+    roms = roms_container.query_items(query, enable_cross_partition_query=True)
+    out = list(roms)
+    return jsonify(data=out)
 
 
 @app.errorhandler(404)
@@ -82,3 +86,5 @@ def not_found(error):
 def server_error(error):
     return make_response(jsonify(error="Internal server error"), 500)
 
+
+app.run(host='0.0.0.0', port=2020, debug=True)
